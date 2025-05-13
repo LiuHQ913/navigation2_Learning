@@ -65,10 +65,10 @@ DWBLocalPlanner::DWBLocalPlanner()
 {
 }
 
-void DWBLocalPlanner::configure(
-  const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
-  std::string name, std::shared_ptr<tf2_ros::Buffer> tf,
-  std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
+void DWBLocalPlanner::configure(const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
+                                std::string name, 
+                                std::shared_ptr<tf2_ros::Buffer> tf,
+                                std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
 {
   node_ = parent;
   auto node = node_.lock();
@@ -78,36 +78,36 @@ void DWBLocalPlanner::configure(
   costmap_ros_ = costmap_ros;
   tf_ = tf;
   dwb_plugin_name_ = name;
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".critics",
-    rclcpp::PARAMETER_STRING_ARRAY);
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".default_critic_namespaces",
-    rclcpp::ParameterValue(std::vector<std::string>()));
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".prune_plan",
-    rclcpp::ParameterValue(true));
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".prune_distance",
-    rclcpp::ParameterValue(2.0));
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".forward_prune_distance",
-    rclcpp::ParameterValue(2.0));
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".debug_trajectory_details",
-    rclcpp::ParameterValue(false));
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".trajectory_generator_name",
-    rclcpp::ParameterValue(std::string("dwb_plugins::StandardTrajectoryGenerator")));
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".transform_tolerance",
-    rclcpp::ParameterValue(0.1));
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".shorten_transformed_plan",
-    rclcpp::ParameterValue(true));
-  declare_parameter_if_not_declared(
-    node, dwb_plugin_name_ + ".short_circuit_trajectory_evaluation",
-    rclcpp::ParameterValue(true));
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".critics",
+                                    rclcpp::PARAMETER_STRING_ARRAY);
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".default_critic_namespaces",
+                                    rclcpp::ParameterValue(std::vector<std::string>()));
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".prune_plan",
+                                    rclcpp::ParameterValue(true));
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".prune_distance",
+                                    rclcpp::ParameterValue(2.0));
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".forward_prune_distance",
+                                    rclcpp::ParameterValue(2.0));
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".debug_trajectory_details",
+                                    rclcpp::ParameterValue(false));
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".trajectory_generator_name",
+                                    rclcpp::ParameterValue(std::string("dwb_plugins::StandardTrajectoryGenerator")));
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".transform_tolerance",
+                                    rclcpp::ParameterValue(0.1));
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".shorten_transformed_plan",
+                                    rclcpp::ParameterValue(true));
+  declare_parameter_if_not_declared(node, 
+                                    dwb_plugin_name_ + ".short_circuit_trajectory_evaluation",
+                                    rclcpp::ParameterValue(true));
 
   std::string traj_generator_name;
 
@@ -121,9 +121,7 @@ void DWBLocalPlanner::configure(
   node->get_parameter(dwb_plugin_name_ + ".forward_prune_distance", forward_prune_distance_);
   node->get_parameter(dwb_plugin_name_ + ".debug_trajectory_details", debug_trajectory_details_);
   node->get_parameter(dwb_plugin_name_ + ".trajectory_generator_name", traj_generator_name);
-  node->get_parameter(
-    dwb_plugin_name_ + ".short_circuit_trajectory_evaluation",
-    short_circuit_trajectory_evaluation_);
+  node->get_parameter(dwb_plugin_name_ + ".short_circuit_trajectory_evaluation", short_circuit_trajectory_evaluation_);
   node->get_parameter(dwb_plugin_name_ + ".shorten_transformed_plan", shorten_transformed_plan_);
 
   pub_ = std::make_unique<DWBPublisher>(node, dwb_plugin_name_);
@@ -135,7 +133,8 @@ void DWBLocalPlanner::configure(
 
   try {
     loadCritics();
-  } catch (const std::exception & e) {
+  } 
+  catch (const std::exception & e) {
     RCLCPP_ERROR(logger_, "Couldn't load critics! Caught exception: %s", e.what());
     throw;
   }
@@ -227,7 +226,7 @@ DWBLocalPlanner::loadCritics()
 void
 DWBLocalPlanner::setPlan(const nav_msgs::msg::Path & path)
 {
-  auto path2d = nav_2d_utils::pathToPath2D(path);
+  auto path2d = nav_2d_utils::pathToPath2D(path); // lhq 设置全局路径
   for (TrajectoryCritic::Ptr & critic : critics_) {
     critic->reset();
   }

@@ -243,6 +243,8 @@ class BasicNavigator(Node):
         self.result_future = self.goal_handle.get_result_async()
         return True
 
+    # 定义 followPath 方法，接收路径（path）、控制器ID和目标检查器ID，返回 RunningTask 或 None。
+    # 在Nav2中，机器人跟随路径时，实际的运动控制是由“控制器”插件完成的。不同的控制器插件实现了不同的路径跟随算法，比如DWB（Dynamic Window Approach）、Regulated Pure Pursuit等。
     def followPath(self, path, controller_id='', goal_checker_id=''):
         """Send a `FollowPath` action request."""
         self.debug("Waiting for 'FollowPath' action server")
@@ -251,12 +253,15 @@ class BasicNavigator(Node):
 
         goal_msg = FollowPath.Goal()
         goal_msg.path = path
-        goal_msg.controller_id = controller_id
-        goal_msg.goal_checker_id = goal_checker_id
+        goal_msg.controller_id = controller_id      # TODO 用的什么控制器？
+        goal_msg.goal_checker_id = goal_checker_id  # TODO 用的什么控制器？
 
         self.info('Executing path...')
+
+        # 异步发送目标到 action server，并注册反馈回调。
         send_goal_future = self.follow_path_client.send_goal_async(goal_msg,
                                                                    self._feedbackCallback)
+        # 阻塞直到发送目标完成。
         rclpy.spin_until_future_complete(self, send_goal_future)
         self.goal_handle = send_goal_future.result()
 

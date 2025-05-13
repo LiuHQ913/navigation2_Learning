@@ -66,10 +66,11 @@ public:
    */
   DWBLocalPlanner();
 
-  void configure(
-    const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
-    std::string name, std::shared_ptr<tf2_ros::Buffer> tf,
-    std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros) override;
+  // 在导航2（Nav2）系统中，dwb_local_planner 作为一个插件被加载时，生命周期管理器会依次调用其 configure、activate、deactivate、cleanup 等生命周期函数。
+  void configure(const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
+                 std::string name, 
+                 std::shared_ptr<tf2_ros::Buffer> tf,
+                 std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros) override;
 
   virtual ~DWBLocalPlanner() {}
 
@@ -231,8 +232,8 @@ protected:
   pluginlib::ClassLoader<TrajectoryGenerator> traj_gen_loader_;
   TrajectoryGenerator::Ptr traj_generator_;
 
-  pluginlib::ClassLoader<TrajectoryCritic> critic_loader_;
-  std::vector<TrajectoryCritic::Ptr> critics_;
+  pluginlib::ClassLoader<TrajectoryCritic> critic_loader_; // 轨迹评价器插件
+  std::vector<TrajectoryCritic::Ptr> critics_;             // 轨迹评价器列表 
 
   std::string dwb_plugin_name_;
 

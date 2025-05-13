@@ -62,6 +62,10 @@ public:
   ~ControllerServer();
 
 protected:
+
+  // 这段代码声明了一个在ROS 2生命周期节点“配置”阶段被调用的函数，用于初始化和配置控制器相关的插件、订阅器、发布器等资源。如果插件初始化失败，会抛出异常。
+  // ROS 2 生命周期节点管理系统（rclcpp_lifecycle::LifecycleNode）自动调用的。
+  // 当节点接收到“配置”请求时，生命周期管理器会自动调用你在子类中重写的 on_configure 方法。
   /**
    * @brief Configures controller parameters and member variables
    *
@@ -111,8 +115,9 @@ protected:
   using ActionServer = nav2_util::SimpleActionServer<Action>;
 
   // Our action server implements the FollowPath action
-  std::unique_ptr<ActionServer> action_server_;
+  std::unique_ptr<ActionServer> action_server_; // FollowPath 动作服务器，处理路径跟踪请求
 
+  // kernel 回调函数
   /**
    * @brief FollowPath action server callback. Handles action server updates and
    * spins server until goal is reached
@@ -188,6 +193,7 @@ protected:
     return (std::abs(velocity) > threshold) ? velocity : 0.0;
   }
 
+  // 对输入的二维速度（Twist2D）进行“阈值处理”，即对每个分量（x、y、theta）分别判断其绝对值是否超过设定的最小阈值，如果没有超过，则将其置为0，否则保留原值。
   /**
    * @brief get the thresholded Twist
    * @param Twist The current Twist from odometry
@@ -199,7 +205,7 @@ protected:
     twist_thresh.x = getThresholdedVelocity(twist.x, min_x_velocity_threshold_);
     twist_thresh.y = getThresholdedVelocity(twist.y, min_y_velocity_threshold_);
     twist_thresh.theta = getThresholdedVelocity(twist.theta, min_theta_velocity_threshold_);
-    return twist_thresh;
+    return twist_thresh; // TODO flag
   }
 
   /**

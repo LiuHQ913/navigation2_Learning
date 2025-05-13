@@ -81,77 +81,88 @@ ControllerServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
 
   RCLCPP_INFO(get_logger(), "Configuring controller interface");
 
+  // 获取进度检查器（progress checker）
   get_parameter("progress_checker_plugin", progress_checker_id_);
   if (progress_checker_id_ == default_progress_checker_id_) {
-    nav2_util::declare_parameter_if_not_declared(
-      node, default_progress_checker_id_ + ".plugin",
-      rclcpp::ParameterValue(default_progress_checker_type_));
+    nav2_util::declare_parameter_if_not_declared(node, 
+                                                 default_progress_checker_id_ + ".plugin",
+                                                 rclcpp::ParameterValue(default_progress_checker_type_));
   }
 
+  // 获取目标检查器（goal checker）
   RCLCPP_INFO(get_logger(), "getting goal checker plugins..");
   get_parameter("goal_checker_plugins", goal_checker_ids_);
-  if (goal_checker_ids_ == default_goal_checker_ids_) {
-    for (size_t i = 0; i < default_goal_checker_ids_.size(); ++i) {
-      nav2_util::declare_parameter_if_not_declared(
-        node, default_goal_checker_ids_[i] + ".plugin",
-        rclcpp::ParameterValue(default_goal_checker_types_[i]));
+  if (goal_checker_ids_ == default_goal_checker_ids_)
+  {
+    for (size_t i = 0; i < default_goal_checker_ids_.size(); ++i)
+    {
+      nav2_util::declare_parameter_if_not_declared(node, 
+                                                   default_goal_checker_ids_[i] + ".plugin",
+                                                   rclcpp::ParameterValue(default_goal_checker_types_[i]));
     }
   }
 
+  // 获取控制器（controller）
+  /*
+    controller_plugins 是一个字符串数组（YAML 列表），可以写成：
+    controller_plugins: ["FollowPath", "MyCustomController", "AnotherController"]
+    controller_ids_ 可用来存储所有配置的控制器插件ID。
+  */
   get_parameter("controller_plugins", controller_ids_);
   if (controller_ids_ == default_ids_) {
     for (size_t i = 0; i < default_ids_.size(); ++i) {
-      nav2_util::declare_parameter_if_not_declared(
-        node, default_ids_[i] + ".plugin",
-        rclcpp::ParameterValue(default_types_[i]));
+      nav2_util::declare_parameter_if_not_declared(node, 
+                                                   default_ids_[i] + ".plugin",
+                                                   rclcpp::ParameterValue(default_types_[i]));
     }
   }
 
   controller_types_.resize(controller_ids_.size());
   goal_checker_types_.resize(goal_checker_ids_.size());
 
-  get_parameter("controller_frequency", controller_frequency_);
-  get_parameter("min_x_velocity_threshold", min_x_velocity_threshold_);
-  get_parameter("min_y_velocity_threshold", min_y_velocity_threshold_);
-  get_parameter("min_theta_velocity_threshold", min_theta_velocity_threshold_);
+  get_parameter("controller_frequency", controller_frequency_);                  // 控制器频率
+  get_parameter("min_x_velocity_threshold", min_x_velocity_threshold_);          // 最小x速度阈值
+  get_parameter("min_y_velocity_threshold", min_y_velocity_threshold_);          // 最小y速度阈值
+  get_parameter("min_theta_velocity_threshold", min_theta_velocity_threshold_);  // 最小theta速度阈值
   RCLCPP_INFO(get_logger(), "Controller frequency set to %.4fHz", controller_frequency_);
 
   std::string speed_limit_topic;
   get_parameter("speed_limit_topic", speed_limit_topic);
-  get_parameter("failure_tolerance", failure_tolerance_);
+  get_parameter("failure_tolerance", failure_tolerance_); // 失败容忍度
 
+  // 配置代价地图（costmap），并启动一个线程专门运行代价地图节点。
   costmap_ros_->configure();
   // Launch a thread to run the costmap node
   costmap_thread_ = std::make_unique<nav2_util::NodeThread>(costmap_ros_);
 
+  """
+  对于每一类插件(进度检查器、目标检查器、控制器), 代码都采用循环和异常处理机制：尝试加载插件类型、创建插件实例、初始化插件，并将其插入到相应的映射表中。
+  如果插件加载或初始化失败，会记录致命日志，调用 on_cleanup 释放资源，并返回失败状态。
+  插件加载完成后, 代码会将所有插件ID拼接成字符串, 并输出日志,方便调试和确认加载情况。
+  """
   try {
-    progress_checker_type_ = nav2_util::get_plugin_type_param(node, progress_checker_id_);
-    progress_checker_ = progress_checker_loader_.createUniqueInstance(progress_checker_type_);
-    RCLCPP_INFO(
-      get_logger(), "Created progress_checker : %s of type %s",
-      progress_checker_id_.c_str(), progress_checker_type_.c_str());
+    progress_checker_type_ = nav2_util::get_plugin_type_param(node, progress_checker_id_);       // 获取插件名称
+    progress_checker_ = progress_checker_loader_.createUniqueInstance(progress_checker_type_);   // 创建插件实例
+    RCLCPP_INFO(get_logger(), "Created progress_checker : %s of type %s",
+                progress_checker_id_.c_str(), progress_checker_type_.c_str());
     progress_checker_->initialize(node, progress_checker_id_);
-  } catch (const pluginlib::PluginlibException & ex) {
-    RCLCPP_FATAL(
-      get_logger(),
-      "Failed to create progress_checker. Exception: %s", ex.what());
+  } 
+  catch (const pluginlib::PluginlibException & ex) {
+    RCLCPP_FATAL( get_logger(), "Failed to create progress_checker. Exception: %s", ex.what());
     return nav2_util::CallbackReturn::FAILURE;
   }
 
   for (size_t i = 0; i != goal_checker_ids_.size(); i++) {
     try {
       goal_checker_types_[i] = nav2_util::get_plugin_type_param(node, goal_checker_ids_[i]);
-      nav2_core::GoalChecker::Ptr goal_checker =
-        goal_checker_loader_.createUniqueInstance(goal_checker_types_[i]);
-      RCLCPP_INFO(
-        get_logger(), "Created goal checker : %s of type %s",
-        goal_checker_ids_[i].c_str(), goal_checker_types_[i].c_str());
+      nav2_core::GoalChecker::Ptr goal_checker = goal_checker_loader_.createUniqueInstance(goal_checker_types_[i]);
+      RCLCPP_INFO(get_logger(), "Created goal checker : %s of type %s",
+                  goal_checker_ids_[i].c_str(), goal_checker_types_[i].c_str());
       goal_checker->initialize(node, goal_checker_ids_[i], costmap_ros_);
       goal_checkers_.insert({goal_checker_ids_[i], goal_checker});
-    } catch (const pluginlib::PluginlibException & ex) {
-      RCLCPP_FATAL(
-        get_logger(),
-        "Failed to create goal checker. Exception: %s", ex.what());
+    } 
+    catch (const pluginlib::PluginlibException & ex) {
+      RCLCPP_FATAL(get_logger(), "Failed to create goal checker. Exception: %s", ex.what());
       return nav2_util::CallbackReturn::FAILURE;
     }
   }
@@ -160,26 +171,33 @@ ControllerServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
     goal_checker_ids_concat_ += goal_checker_ids_[i] + std::string(" ");
   }
 
-  RCLCPP_INFO(
-    get_logger(),
-    "Controller Server has %s goal checkers available.", goal_checker_ids_concat_.c_str());
+  RCLCPP_INFO(get_logger(), "Controller Server has %s goal checkers available.", goal_checker_ids_concat_.c_str());
 
-  for (size_t i = 0; i != controller_ids_.size(); i++) {
+  for (size_t i = 0; i != controller_ids_.size(); i++) 
+  {
     try {
+      /*
+      通过插件类型字符串（如 "nav2_mppi_controller::MPPIController"），动态查找并创建对应的控制器对象。
+      返回的是一个指向 nav2_core::Controller 的智能指针（Ptr）
+      让控制器服务器可以根据参数灵活加载不同的控制器实现，而不需要在编译时写死具体的类名
+      */
+      // TODO 了解 pluginlib::ClassLoader 的更多细节或插件机制的原理
       controller_types_[i] = nav2_util::get_plugin_type_param(node, controller_ids_[i]);
-      nav2_core::Controller::Ptr controller =
-        lp_loader_.createUniqueInstance(controller_types_[i]);
-      RCLCPP_INFO(
-        get_logger(), "Created controller : %s of type %s",
-        controller_ids_[i].c_str(), controller_types_[i].c_str());
-      controller->configure(
-        node, controller_ids_[i],
-        costmap_ros_->getTfBuffer(), costmap_ros_);
+      nav2_core::Controller::Ptr controller = lp_loader_.createUniqueInstance(controller_types_[i]);
+      RCLCPP_INFO(get_logger(), "Created controller : %s of type %s",
+                  controller_ids_[i].c_str(), controller_types_[i].c_str());
+      /* code
+        配置控制器
+      */
+      controller->configure(node,                         // 当前节点
+                            controller_ids_[i],           // 控制器ID
+                            costmap_ros_->getTfBuffer(),  // tf坐标变换 // TODO 为什么用这种方法获取tf变换
+                            costmap_ros_);                // 代价地图
+      // 将控制器插入到 controllers_ 映射中
       controllers_.insert({controller_ids_[i], controller});
-    } catch (const pluginlib::PluginlibException & ex) {
-      RCLCPP_FATAL(
-        get_logger(),
-        "Failed to create controller. Exception: %s", ex.what());
+    } 
+    catch (const pluginlib::PluginlibException & ex) {
+      RCLCPP_FATAL(get_logger(), "Failed to create controller. Exception: %s", ex.what());
       return nav2_util::CallbackReturn::FAILURE;
     }
   }
@@ -188,26 +206,26 @@ ControllerServer::on_configure(const rclcpp_lifecycle::State & /*state*/)
     controller_ids_concat_ += controller_ids_[i] + std::string(" ");
   }
 
-  RCLCPP_INFO(
-    get_logger(),
-    "Controller Server has %s controllers available.", controller_ids_concat_.c_str());
+  RCLCPP_INFO(get_logger(), "Controller Server has %s controllers available.", controller_ids_concat_.c_str());
 
+  // 初始化里程计订阅器和速度发布器
   odom_sub_ = std::make_unique<nav_2d_utils::OdomSubscriber>(node);
   vel_publisher_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
 
+  // 创建"跟随路径"动作服务器。如果动作服务器创建失败，同样会清理资源并返回失败。
   // Create the action server that we implement with our followPath method
-  action_server_ = std::make_unique<ActionServer>(
-    shared_from_this(),
-    "follow_path",
-    std::bind(&ControllerServer::computeControl, this),
-    nullptr,
-    std::chrono::milliseconds(500),
-    true);
-
+  action_server_ = std::make_unique<ActionServer>(shared_from_this(),
+                                                  "follow_path",
+                                                  std::bind(&ControllerServer::computeControl, this),
+                                                  nullptr,
+                                                  std::chrono::milliseconds(500),
+                                                  true);
+  
+  // 创建速度限制话题订阅器
   // Set subscribtion to the speed limiting topic
-  speed_limit_sub_ = create_subscription<nav2_msgs::msg::SpeedLimit>(
-    speed_limit_topic, rclcpp::QoS(10),
-    std::bind(&ControllerServer::speedLimitCallback, this, std::placeholders::_1));
+  speed_limit_sub_ = create_subscription<nav2_msgs::msg::SpeedLimit>(speed_limit_topic, 
+                                                                     rclcpp::QoS(10),
+                                                                     std::bind(&ControllerServer::speedLimitCallback, this, std::placeholders::_1));
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
@@ -300,25 +318,38 @@ ControllerServer::on_shutdown(const rclcpp_lifecycle::State &)
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-bool ControllerServer::findControllerId(
-  const std::string & c_name,
-  std::string & current_controller)
+/**
+  @brief 查找控制器ID
+  @param[in] c_name 控制器名称
+  @param[out] current_controller 当前控制器名称
+  @return 是否找到控制器
+*/
+bool ControllerServer::findControllerId(const std::string &c_name,
+                                        std::string &current_controller)
 {
-  if (controllers_.find(c_name) == controllers_.end()) {
-    if (controllers_.size() == 1 && c_name.empty()) {
-      RCLCPP_WARN_ONCE(
-        get_logger(), "No controller was specified in action call."
-        " Server will use only plugin loaded %s. "
-        "This warning will appear once.", controller_ids_concat_.c_str());
+  if (controllers_.find(c_name) == controllers_.end())
+  {
+    if (controllers_.size() == 1 && c_name.empty())
+    {
+      RCLCPP_WARN_ONCE(get_logger(),
+                       "No controller was specified in action call."
+                          " Server will use only plugin loaded %s. "
+                          "This warning will appear once.",
+                       controller_ids_concat_.c_str());
       current_controller = controllers_.begin()->first;
-    } else {
-      RCLCPP_ERROR(
-        get_logger(), "FollowPath called with controller name %s, "
-        "which does not exist. Available controllers are: %s.",
-        c_name.c_str(), controller_ids_concat_.c_str());
+    }
+    else
+    {
+      RCLCPP_ERROR(get_logger(), 
+                   "FollowPath called with controller name %s, "
+                   "which does not exist. Available controllers are: %s.",
+                    c_name.c_str(), 
+                    controller_ids_concat_.c_str());
       return false;
     }
-  } else {
+  }
+  else
+  {
     RCLCPP_DEBUG(get_logger(), "Selected controller: %s.", c_name.c_str());
     current_controller = c_name;
   }
@@ -359,35 +390,42 @@ void ControllerServer::computeControl()
   RCLCPP_INFO(get_logger(), "Received a goal, begin computing control effort.");
 
   try {
+    // 根据goal获取控制器
     std::string c_name = action_server_->get_current_goal()->controller_id;
     std::string current_controller;
     if (findControllerId(c_name, current_controller)) {
       current_controller_ = current_controller;
-    } else {
+    } 
+    else {
       action_server_->terminate_current();
       return;
     }
 
+    // 根据goal获取目标检查器
     std::string gc_name = action_server_->get_current_goal()->goal_checker_id;
     std::string current_goal_checker;
     if (findGoalCheckerId(gc_name, current_goal_checker)) {
       current_goal_checker_ = current_goal_checker;
-    } else {
+    } 
+    else {
       action_server_->terminate_current();
       return;
     }
 
-    setPlannerPath(action_server_->get_current_goal()->path);
+    setPlannerPath(action_server_->get_current_goal()->path); // 设置全局路径
     progress_checker_->reset();
 
     last_valid_cmd_time_ = now();
-    rclcpp::WallRate loop_rate(controller_frequency_);
-    while (rclcpp::ok()) {
+    rclcpp::WallRate loop_rate(controller_frequency_); // 控制器频率
+    while (rclcpp::ok()) // 开始循环追踪
+    {
+      // 检查action server是否可用或活跃
       if (action_server_ == nullptr || !action_server_->is_server_active()) {
         RCLCPP_DEBUG(get_logger(), "Action server unavailable or inactive. Stopping.");
         return;
       }
 
+      // 检查action server是否被取消
       if (action_server_->is_cancel_requested()) {
         RCLCPP_INFO(get_logger(), "Goal was canceled. Stopping the robot.");
         action_server_->terminate_all();
@@ -401,7 +439,7 @@ void ControllerServer::computeControl()
         r.sleep();
       }
 
-      updateGlobalPath();
+      updateGlobalPath(); // 接受到了新全局路径，进行更新
 
       computeAndPublishVelocity();
 
@@ -416,12 +454,14 @@ void ControllerServer::computeControl()
           controller_frequency_);
       }
     }
-  } catch (nav2_core::PlannerException & e) {
+  } 
+  catch (nav2_core::PlannerException & e) {
     RCLCPP_ERROR(this->get_logger(), "%s", e.what());
     publishZeroVelocity();
     action_server_->terminate_current();
     return;
-  } catch (std::exception & e) {
+  } 
+  catch (std::exception & e) {
     RCLCPP_ERROR(this->get_logger(), "%s", e.what());
     publishZeroVelocity();
     std::shared_ptr<Action::Result> result = std::make_shared<Action::Result>();
@@ -437,23 +477,25 @@ void ControllerServer::computeControl()
   action_server_->succeeded_current();
 }
 
+/**
+  @brief Assigns path to controller
+  @param path Path received from action server
+*/
 void ControllerServer::setPlannerPath(const nav_msgs::msg::Path & path)
 {
-  RCLCPP_DEBUG(
-    get_logger(),
-    "Providing path to the controller %s", current_controller_.c_str());
+  RCLCPP_DEBUG(get_logger(), "Providing path to the controller %s", current_controller_.c_str());
   if (path.poses.empty()) {
     throw nav2_core::PlannerException("Invalid path, Path is empty.");
   }
-  controllers_[current_controller_]->setPlan(path);
+  // QA 会不会键不存在时，[]触发插入操作？这样会导致空指针的解引用
+  controllers_[current_controller_]->setPlan(path); // lhq 设置全局路径
 
   end_pose_ = path.poses.back();
   end_pose_.header.frame_id = path.header.frame_id;
   goal_checkers_[current_goal_checker_]->reset();
 
-  RCLCPP_DEBUG(
-    get_logger(), "Path end point is (%.2f, %.2f)",
-    end_pose_.pose.position.x, end_pose_.pose.position.y);
+  RCLCPP_DEBUG(get_logger(), "Path end point is (%.2f, %.2f)",
+               end_pose_.pose.position.x, end_pose_.pose.position.y);
 
   current_path_ = path;
 }
@@ -462,10 +504,12 @@ void ControllerServer::computeAndPublishVelocity()
 {
   geometry_msgs::msg::PoseStamped pose;
 
+  // 获取机器人当前位姿
   if (!getRobotPose(pose)) {
     throw nav2_core::PlannerException("Failed to obtain robot pose");
   }
 
+  // 根据progress_checker_检查机器人是否移动
   if (!progress_checker_->check(pose)) {
     throw nav2_core::PlannerException("Failed to make progress");
   }
@@ -475,11 +519,9 @@ void ControllerServer::computeAndPublishVelocity()
   geometry_msgs::msg::TwistStamped cmd_vel_2d;
 
   try {
-    cmd_vel_2d =
-      controllers_[current_controller_]->computeVelocityCommands(
-      pose,
-      nav_2d_utils::twist2Dto3D(twist),
-      goal_checkers_[current_goal_checker_].get());
+    cmd_vel_2d = controllers_[current_controller_]->computeVelocityCommands(pose,
+                                                                            nav_2d_utils::twist2Dto3D(twist),
+                                                                            goal_checkers_[current_goal_checker_].get());
     last_valid_cmd_time_ = now();
   } catch (nav2_core::PlannerException & e) {
     if (failure_tolerance_ > 0 || failure_tolerance_ == -1.0) {
@@ -532,26 +574,25 @@ void ControllerServer::computeAndPublishVelocity()
 
 void ControllerServer::updateGlobalPath()
 {
-  if (action_server_->is_preempt_requested()) {
+  if (action_server_->is_preempt_requested()) // 是否被抢占(动作服务器接收新消息)
+  {
     RCLCPP_INFO(get_logger(), "Passing new path to controller.");
     auto goal = action_server_->accept_pending_goal();
     std::string current_controller;
     if (findControllerId(goal->controller_id, current_controller)) {
       current_controller_ = current_controller;
-    } else {
-      RCLCPP_INFO(
-        get_logger(), "Terminating action, invalid controller %s requested.",
-        goal->controller_id.c_str());
+    } 
+    else {
+      RCLCPP_INFO(get_logger(), "Terminating action, invalid controller %s requested.", goal->controller_id.c_str());
       action_server_->terminate_current();
       return;
     }
     std::string current_goal_checker;
     if (findGoalCheckerId(goal->goal_checker_id, current_goal_checker)) {
       current_goal_checker_ = current_goal_checker;
-    } else {
-      RCLCPP_INFO(
-        get_logger(), "Terminating action, invalid goal checker %s requested.",
-        goal->goal_checker_id.c_str());
+    } 
+    else {
+      RCLCPP_INFO(get_logger(), "Terminating action, invalid goal checker %s requested.", goal->goal_checker_id.c_str());
       action_server_->terminate_current();
       return;
     }

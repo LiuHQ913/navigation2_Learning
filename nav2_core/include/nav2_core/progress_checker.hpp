@@ -25,6 +25,9 @@
 
 namespace nav2_core
 {
+
+// nav2_core::ProgressChecker，是一个用于检查机器人是否在向目标前进的插件接口类。
+//它的主要作用是在导航过程中判断机器人是否有“进展”，即位置是否发生了有效移动，以避免机器人卡住或陷入死循环。 
 /**
  * @class nav2_core::ProgressChecker
  * @brief This class defines the plugin interface used to check the
@@ -42,9 +45,9 @@ public:
    * @brief Initialize parameters for ProgressChecker
    * @param parent Node pointer
    */
-  virtual void initialize(
-    const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
-    const std::string & plugin_name) = 0;
+  virtual void initialize(const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
+                          const std::string & plugin_name) = 0;
+
   /**
    * @brief Checks if the robot has moved compare to previous
    * pose
@@ -52,6 +55,7 @@ public:
    * @return True if progress is made
    */
   virtual bool check(geometry_msgs::msg::PoseStamped & current_pose) = 0;
+
   /**
    * @brief Reset class state upon calling
    */

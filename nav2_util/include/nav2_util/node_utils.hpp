@@ -132,19 +132,18 @@ void declare_parameter_if_not_declared(
  * \return A string containing the type of plugin (the value of "<plugin_name>.plugin" parameter)
  */
 template<typename NodeT>
-std::string get_plugin_type_param(
-  NodeT node,
-  const std::string & plugin_name)
+std::string get_plugin_type_param(NodeT node,
+                                  const std::string & plugin_name)
 {
   declare_parameter_if_not_declared(node, plugin_name + ".plugin", rclcpp::PARAMETER_STRING);
   std::string plugin_type;
   try {
     if (!node->get_parameter(plugin_name + ".plugin", plugin_type)) {
-      RCLCPP_FATAL(
-        node->get_logger(), "Can not get 'plugin' param value for %s", plugin_name.c_str());
+      RCLCPP_FATAL(node->get_logger(), "Can not get 'plugin' param value for %s", plugin_name.c_str());
       exit(-1);
     }
-  } catch (rclcpp::exceptions::ParameterUninitializedException & ex) {
+  } 
+  catch (rclcpp::exceptions::ParameterUninitializedException & ex) {
     RCLCPP_FATAL(node->get_logger(), "'plugin' param not defined for %s", plugin_name.c_str());
     exit(-1);
   }

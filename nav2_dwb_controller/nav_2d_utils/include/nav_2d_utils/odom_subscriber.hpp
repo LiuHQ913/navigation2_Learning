@@ -65,16 +65,13 @@ public:
     nav2_util::LifecycleNode::SharedPtr nh,
     std::string default_topic = "odom")
   {
-    nav2_util::declare_parameter_if_not_declared(
-      nh, "odom_topic", rclcpp::ParameterValue(default_topic));
+    nav2_util::declare_parameter_if_not_declared( nh, "odom_topic", rclcpp::ParameterValue(default_topic));
 
     std::string odom_topic;
     nh->get_parameter_or("odom_topic", odom_topic, default_topic);
-    odom_sub_ =
-      nh->create_subscription<nav_msgs::msg::Odometry>(
-      odom_topic,
-      rclcpp::SystemDefaultsQoS(),
-      std::bind(&OdomSubscriber::odomCallback, this, std::placeholders::_1));
+    odom_sub_ = nh->create_subscription<nav_msgs::msg::Odometry>(odom_topic,
+                                                                 rclcpp::SystemDefaultsQoS(),
+                                                                 std::bind(&OdomSubscriber::odomCallback, this, std::placeholders::_1));
   }
 
   inline nav_2d_msgs::msg::Twist2D getTwist() {return odom_vel_.velocity;}

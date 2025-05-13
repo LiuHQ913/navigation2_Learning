@@ -21,6 +21,8 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<nav2_controller::ControllerServer>();
+  // 启动了ROS2的事件循环(自旋)（spin）。rclcpp::spin 会阻塞当前线程，并持续监听和处理与节点相关的事件（例如订阅的消息、服务请求等）。
+  // 这里通过调用 node->get_node_base_interface() 获取节点的基础接口，确保事件循环能够正确运行。
   rclcpp::spin(node->get_node_base_interface());
   rclcpp::shutdown();
 
