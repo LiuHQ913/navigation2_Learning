@@ -61,13 +61,19 @@ public:
    * @param nh NodeHandle for creating subscriber
    * @param default_topic Name of the topic that will be loaded of the odom_topic param is not set.
    */
-  explicit OdomSubscriber(
-    nav2_util::LifecycleNode::SharedPtr nh,
-    std::string default_topic = "odom")
+  explicit OdomSubscriber(nav2_util::LifecycleNode::SharedPtr nh,
+                          std::string default_topic = "odom")
   {
-    nav2_util::declare_parameter_if_not_declared( nh, "odom_topic", rclcpp::ParameterValue(default_topic));
+    /* code rclcpp::ParameterValue
+        参数声明和设置时，接口需要统一的“参数值”类型，这样才能用同一个函数处理不同类型的参数。
+        rclcpp::ParameterValue 就是这样一个“万能盒子”，它可以用来存储任意类型的参数值。
+        这样声明参数时，不用关心参数是什么类型，直接用 ParameterValue 包装一下就行了。
+    */
+    // 如果参数服务器中还没有odom_topic这个参数，就用default_topic作为默认值声明它
+    nav2_util::declare_parameter_if_not_declared(nh, "odom_topic", rclcpp::ParameterValue(default_topic));
 
     std::string odom_topic;
+    // 参数服务器获取odom_topic的值，如果没有设置，则用default_topic赋值给odom_topic变量。
     nh->get_parameter_or("odom_topic", odom_topic, default_topic);
     odom_sub_ = nh->create_subscription<nav_msgs::msg::Odometry>(odom_topic,
                                                                  rclcpp::SystemDefaultsQoS(),

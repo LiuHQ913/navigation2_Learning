@@ -514,6 +514,7 @@ void ControllerServer::computeAndPublishVelocity()
     throw nav2_core::PlannerException("Failed to make progress");
   }
 
+  // 通过订阅odom获取机器人当前速度, 并根据阈值处理(小于阈值, 则设置为0)
   nav_2d_msgs::msg::Twist2D twist = getThresholdedTwist(odom_sub_->getTwist());
 
   geometry_msgs::msg::TwistStamped cmd_vel_2d;

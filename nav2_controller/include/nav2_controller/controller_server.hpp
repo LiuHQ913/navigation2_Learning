@@ -193,7 +193,8 @@ protected:
     return (std::abs(velocity) > threshold) ? velocity : 0.0;
   }
 
-  // 对输入的二维速度（Twist2D）进行“阈值处理”，即对每个分量（x、y、theta）分别判断其绝对值是否超过设定的最小阈值，如果没有超过，则将其置为0，否则保留原值。
+  // 对输入的二维速度（Twist2D）进行“阈值处理”，即对每个分量（x、y、theta）分别判断其绝对值是否超过设定的最小阈值，
+  // 如果没有超过，则将其置为0，否则保留原值。
   /**
    * @brief get the thresholded Twist
    * @param Twist The current Twist from odometry
@@ -205,7 +206,7 @@ protected:
     twist_thresh.x = getThresholdedVelocity(twist.x, min_x_velocity_threshold_);
     twist_thresh.y = getThresholdedVelocity(twist.y, min_y_velocity_threshold_);
     twist_thresh.theta = getThresholdedVelocity(twist.theta, min_theta_velocity_threshold_);
-    return twist_thresh; // TODO flag
+    return twist_thresh;
   }
 
   /**

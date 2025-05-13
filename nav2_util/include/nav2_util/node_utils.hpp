@@ -101,6 +101,13 @@ void declare_parameter_if_not_declared(
   }
 }
 
+/**
+  @brief 声明一个静态参数（指定类型），如果该参数还没有被声明的话
+  @param[in] NodeT node：节点对象，可以是 rclcpp::Node::SharedPtr 或其他兼容类型。
+  @param[in] const std::string & param_name：参数名称。
+  @param[in] const rclcpp::ParameterType & param_type：参数类型（比如字符串、整数、布尔等，ROS2 内置类型）。
+  @param[in] const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor：参数描述符（可选），用于描述参数的元信息，比如范围、只读等。
+*/
 /// Declares static ROS2 parameter with given type if it was not already declared
 /* Declares static ROS2 parameter with given type if it was not already declared.
  *
@@ -110,12 +117,10 @@ void declare_parameter_if_not_declared(
  * \param[in] parameter_descriptor Parameter descriptor (optional)
  */
 template<typename NodeT>
-void declare_parameter_if_not_declared(
-  NodeT node,
-  const std::string & param_name,
-  const rclcpp::ParameterType & param_type,
-  const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor =
-  rcl_interfaces::msg::ParameterDescriptor())
+void declare_parameter_if_not_declared(NodeT node,
+                                       const std::string & param_name,
+                                       const rclcpp::ParameterType & param_type,
+                                       const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor = rcl_interfaces::msg::ParameterDescriptor())
 {
   if (!node->has_parameter(param_name)) {
     node->declare_parameter(param_name, param_type, parameter_descriptor);
