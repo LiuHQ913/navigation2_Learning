@@ -95,10 +95,9 @@ inline double euclidean_distance(
  * @param is_3d True if a true L2 distance is desired (default false)
  * @return double L2 distance
  */
-inline double euclidean_distance(
-  const geometry_msgs::msg::PoseStamped & pos1,
-  const geometry_msgs::msg::PoseStamped & pos2,
-  const bool is_3d = false)
+inline double euclidean_distance(const geometry_msgs::msg::PoseStamped & pos1,
+                                 const geometry_msgs::msg::PoseStamped & pos2,
+                                 const bool is_3d = false)
 {
   return euclidean_distance(pos1.pose, pos2.pose, is_3d);
 }
@@ -109,9 +108,8 @@ inline double euclidean_distance(
  * @param pos1 Second pose
  * @return double L2 distance
  */
-inline double euclidean_distance(
-  const geometry_msgs::msg::Pose2D & pos1,
-  const geometry_msgs::msg::Pose2D & pos2)
+inline double euclidean_distance(const geometry_msgs::msg::Pose2D & pos1,
+                                 const geometry_msgs::msg::Pose2D & pos2)
 {
   double dx = pos1.x - pos2.x;
   double dy = pos1.y - pos2.y;

@@ -103,8 +103,7 @@ void StandardTrajectoryGenerator::initializeIterator(
   velocity_iterator_->initialize(nh, kinematics_handler_, plugin_name_);
 }
 
-void StandardTrajectoryGenerator::startNewIteration(
-  const nav_2d_msgs::msg::Twist2D & current_velocity)
+void StandardTrajectoryGenerator::startNewIteration(const nav_2d_msgs::msg::Twist2D& current_velocity)
 {
   velocity_iterator_->startNewIteration(current_velocity, sim_time_);
 }

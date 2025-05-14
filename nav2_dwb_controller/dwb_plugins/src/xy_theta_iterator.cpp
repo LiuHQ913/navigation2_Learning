@@ -67,26 +67,25 @@ void XYThetaIterator::initialize(
   nh->get_parameter(plugin_name + ".vtheta_samples", vtheta_samples_);
 }
 
-void XYThetaIterator::startNewIteration(
-  const nav_2d_msgs::msg::Twist2D & current_velocity,
-  double dt)
+void XYThetaIterator::startNewIteration(const nav_2d_msgs::msg::Twist2D& current_velocity,
+                                        double dt)
 {
   KinematicParameters kinematics = kinematics_handler_->getKinematics();
-  x_it_ = std::make_shared<OneDVelocityIterator>(
-    current_velocity.x,
-    kinematics.getMinX(), kinematics.getMaxX(),
-    kinematics.getAccX(), kinematics.getDecelX(),
-    dt, vx_samples_);
-  y_it_ = std::make_shared<OneDVelocityIterator>(
-    current_velocity.y,
-    kinematics.getMinY(), kinematics.getMaxY(),
-    kinematics.getAccY(), kinematics.getDecelY(),
-    dt, vy_samples_);
-  th_it_ = std::make_shared<OneDVelocityIterator>(
-    current_velocity.theta,
-    kinematics.getMinTheta(), kinematics.getMaxTheta(),
-    kinematics.getAccTheta(), kinematics.getDecelTheta(),
-    dt, vtheta_samples_);
+  x_it_  = std::make_shared<OneDVelocityIterator>(current_velocity.x,
+                                                  kinematics.getMinX(), kinematics.getMaxX(),
+                                                  kinematics.getAccX(), kinematics.getDecelX(),
+                                                  dt, 
+                                                  vx_samples_);
+  y_it_  = std::make_shared<OneDVelocityIterator>(current_velocity.y,
+                                                  kinematics.getMinY(), kinematics.getMaxY(),
+                                                  kinematics.getAccY(), kinematics.getDecelY(),
+                                                  dt, 
+                                                  vy_samples_);
+  th_it_ = std::make_shared<OneDVelocityIterator>(current_velocity.theta,
+                                                  kinematics.getMinTheta(), kinematics.getMaxTheta(),
+                                                  kinematics.getAccTheta(), kinematics.getDecelTheta(),
+                                                  dt, 
+                                                  vtheta_samples_);
   if (!isValidVelocity()) {
     iterateToValidVelocity();
   }

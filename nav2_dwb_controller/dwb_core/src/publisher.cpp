@@ -249,9 +249,8 @@ DWBPublisher::publishLocalPlan(
 }
 
 void
-DWBPublisher::publishCostGrid(
-  const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros,
-  const std::vector<TrajectoryCritic::Ptr> critics)
+DWBPublisher::publishCostGrid(const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros,
+                              const std::vector<TrajectoryCritic::Ptr> critics)
 {
   if (cost_grid_pc_pub_->get_subscription_count() < 1) {return;}
 

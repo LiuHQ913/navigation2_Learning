@@ -69,15 +69,20 @@ namespace dwb_core
 class DWBPublisher
 {
 public:
-  explicit DWBPublisher(
-    const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
-    const std::string & plugin_name);
+  explicit DWBPublisher(const rclcpp_lifecycle::LifecycleNode::WeakPtr& parent,
+                        const std::string& plugin_name);
 
   nav2_util::CallbackReturn on_configure();
   nav2_util::CallbackReturn on_activate();
   nav2_util::CallbackReturn on_deactivate();
   nav2_util::CallbackReturn on_cleanup();
 
+  /**
+   * @brief 判断是否需要记录评估结果
+   * 具体来说，如果需要直接发布评估结果（publish_evaluation_），
+   * 或者需要发布轨迹（publish_trajectories_，而轨迹依赖于评估结果），都需要保存评估。
+   * @return 如果需要记录评估结果，则返回true，否则返回false
+   */
   /**
    * @brief Does the publisher require that the LocalPlanEvaluation be saved
    * @return True if the Evaluation is needed to publish either directly or as trajectories
@@ -88,12 +93,10 @@ public:
    * @brief If the pointer is not null, publish the evaluation and trajectories as needed
    */
   void publishEvaluation(std::shared_ptr<dwb_msgs::msg::LocalPlanEvaluation> results);
-  void publishLocalPlan(
-    const std_msgs::msg::Header & header,
-    const dwb_msgs::msg::Trajectory2D & traj);
-  void publishCostGrid(
-    const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros,
-    const std::vector<TrajectoryCritic::Ptr> critics);
+  void publishLocalPlan(const std_msgs::msg::Header& header,
+                        const dwb_msgs::msg::Trajectory2D& traj);
+  void publishCostGrid(const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros,
+                       const std::vector<TrajectoryCritic::Ptr> critics);
   void publishGlobalPlan(const nav_2d_msgs::msg::Path2D plan);
   void publishTransformedPlan(const nav_2d_msgs::msg::Path2D plan);
   void publishLocalPlan(const nav_2d_msgs::msg::Path2D plan);

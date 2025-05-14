@@ -221,7 +221,7 @@ protected:
   std::mutex dynamic_params_lock_;
 
   // The controller needs a costmap node
-  std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_;
+  std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_; // 局部代价地图
   std::unique_ptr<nav2_util::NodeThread> costmap_thread_;
 
   // Publishers and subscribers

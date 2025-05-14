@@ -39,13 +39,11 @@
 namespace nav_2d_utils
 {
 
-bool transformPose(
-  const std::shared_ptr<tf2_ros::Buffer> tf,
-  const std::string frame,
-  const geometry_msgs::msg::PoseStamped & in_pose,
-  geometry_msgs::msg::PoseStamped & out_pose,
-  rclcpp::Duration & transform_tolerance
-)
+bool transformPose(const std::shared_ptr<tf2_ros::Buffer> tf,
+                   const std::string frame,  // lhq 目标坐标系 变换到这个坐标系下
+                   const geometry_msgs::msg::PoseStamped & in_pose,
+                   geometry_msgs::msg::PoseStamped & out_pose,
+                   rclcpp::Duration & transform_tolerance)
 {
   if (in_pose.header.frame_id == frame) {
     out_pose = in_pose;
@@ -53,43 +51,36 @@ bool transformPose(
   }
 
   try {
-    tf->transform(in_pose, out_pose, frame);
+    tf->transform(in_pose, out_pose, frame); // kernel 由tf处理
     return true;
-  } catch (tf2::ExtrapolationException & ex) {
-    auto transform = tf->lookupTransform(
-      frame,
-      in_pose.header.frame_id,
-      tf2::TimePointZero
-    );
-    if (
-      (rclcpp::Time(in_pose.header.stamp) - rclcpp::Time(transform.header.stamp)) >
-      transform_tolerance)
+  } 
+  catch (tf2::ExtrapolationException & ex) {
+    auto transform = tf->lookupTransform(frame,
+                                         in_pose.header.frame_id,
+                                         tf2::TimePointZero);
+    if ( (rclcpp::Time(in_pose.header.stamp) - rclcpp::Time(transform.header.stamp)) >  transform_tolerance)
     {
-      RCLCPP_ERROR(
-        rclcpp::get_logger("tf_help"),
-        "Transform data too old when converting from %s to %s",
-        in_pose.header.frame_id.c_str(),
-        frame.c_str()
-      );
-      RCLCPP_ERROR(
-        rclcpp::get_logger("tf_help"),
-        "Data time: %ds %uns, Transform time: %ds %uns",
-        in_pose.header.stamp.sec,
-        in_pose.header.stamp.nanosec,
-        transform.header.stamp.sec,
-        transform.header.stamp.nanosec
-      );
+      RCLCPP_ERROR(rclcpp::get_logger("tf_help"),
+                   "Transform data too old when converting from %s to %s",
+                   in_pose.header.frame_id.c_str(),
+                   frame.c_str());
+      RCLCPP_ERROR(rclcpp::get_logger("tf_help"),
+                   "Data time: %ds %uns, Transform time: %ds %uns",
+                   in_pose.header.stamp.sec,
+                   in_pose.header.stamp.nanosec,
+                   transform.header.stamp.sec,
+                   transform.header.stamp.nanosec);
       return false;
-    } else {
+    } 
+    else {
       tf2::doTransform(in_pose, out_pose, transform);
       return true;
     }
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("tf_help"),
-      "Exception in transformPose: %s",
-      ex.what()
-    );
+  } 
+  catch (tf2::TransformException & ex) {
+    RCLCPP_ERROR(rclcpp::get_logger("tf_help"),
+                 "Exception in transformPose: %s",
+                 ex.what());
     return false;
   }
   return false;

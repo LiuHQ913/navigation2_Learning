@@ -57,18 +57,18 @@ TrajectoryCritic 这个类的作用是对机器人运动规划中的轨迹进行
 在 ROS2 的导航系统（如 Nav2 或 DWB Controller）中，机器人在每个控制周期会生成多个候选轨迹（Trajectory2D），
 然后需要对这些轨迹进行打分，选出最优的轨迹来执行。TrajectoryCritic 就是用来实现“打分标准”的接口类（基类）。
 主要内容
-1. 定义轨迹评价标准：每个 TrajectoryCritic 子类可以实现不同的评价标准，比如距离障碍物的远近、与目标点的距离、速度平滑性等。
-2. 插件机制：该类是一个插件接口，可以通过插件方式加载不同的评价器，实现灵活扩展。
-3. 轨迹打分：每个候选轨迹都会被所有的 TrajectoryCritic 依次打分，最终综合所有分数，选出最优轨迹。
+  1. 定义轨迹评价标准：每个 TrajectoryCritic 子类可以实现不同的评价标准，比如距离障碍物的远近、与目标点的距离、速度平滑性等。
+  2. 插件机制：该类是一个插件接口，可以通过插件方式加载不同的评价器，实现灵活扩展。
+  3. 轨迹打分：每个候选轨迹都会被所有的 TrajectoryCritic 依次打分，最终综合所有分数，选出最优轨迹。
 使用流程
-1.initialize：初始化，加载参数。
-2.prepare：每次批量评估轨迹前调用，可以做一些预处理。
-3.scoreTrajectory：对每一条轨迹单独打分，返回分数。
-4.debrief：每次选出最终轨迹后调用，可以做一些后处理或记录状态。
-5.addCriticVisualization（可选）：用于可视化调试，把评价结果以点云等形式发布出来。
+  1.initialize：初始化，加载参数。
+  2.prepare：每次批量评估轨迹前调用，可以做一些预处理。
+  3.scoreTrajectory：对每一条轨迹单独打分，返回分数。
+  4.debrief：每次选出最终轨迹后调用，可以做一些后处理或记录状态。
+  5.addCriticVisualization（可选）：用于可视化调试，把评价结果以点云等形式发布出来。
 典型用法
-可以继承 TrajectoryCritic，实现自己的评价标准（比如“离障碍物越远分数越高”）。
-在 DWB Controller 中，可以配置多个 Critic 插件，综合多个标准来选轨迹。
+  可以继承 TrajectoryCritic，实现自己的评价标准（比如“离障碍物越远分数越高”）。
+  在 DWB Controller 中，可以配置多个 Critic 插件，综合多个标准来选轨迹。
 */
 /**
  * @class TrajectoryCritic
@@ -140,7 +140,8 @@ public:
   virtual void reset() {}
 
   /**
-   * @brief Prior to evaluating any trajectories, look at contextual information constant across all trajectories
+   * @brief Prior to evaluating any trajectories, 
+   *        look at contextual information constant across all trajectories
    *
    * Subclasses may overwrite. Return false in case there is any error.
    *
@@ -149,10 +150,10 @@ public:
    * @param goal The final goal (costmap frame)
    * @param global_plan Transformed global plan in costmap frame, possibly cropped to nearby points
    */
-  virtual bool prepare(
-    const geometry_msgs::msg::Pose2D &, const nav_2d_msgs::msg::Twist2D &,
-    const geometry_msgs::msg::Pose2D &,
-    const nav_2d_msgs::msg::Path2D &)
+  virtual bool prepare(const geometry_msgs::msg::Pose2D &,
+                       const nav_2d_msgs::msg::Twist2D &,
+                       const geometry_msgs::msg::Pose2D &,
+                       const nav_2d_msgs::msg::Path2D &)
   {
     return true;
   }

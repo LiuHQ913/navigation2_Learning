@@ -47,7 +47,7 @@ namespace dwb_plugins
  * @class LimitedAccelGenerator
  * @brief Limits the acceleration in the generated trajectories to a fraction of the simulated time.
  */
-class LimitedAccelGenerator : public StandardTrajectoryGenerator
+class LimitedAccelGenerator : public StandardTrajectoryGenerator // TODO acc?
 {
 public:
   void initialize(

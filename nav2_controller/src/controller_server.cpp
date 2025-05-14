@@ -62,8 +62,7 @@ ControllerServer::ControllerServer(const rclcpp::NodeOptions & options)
   declare_parameter("failure_tolerance", rclcpp::ParameterValue(0.0));
 
   // The costmap node is used in the implementation of the controller
-  costmap_ros_ = std::make_shared<nav2_costmap_2d::Costmap2DROS>(
-    "local_costmap", std::string{get_namespace()}, "local_costmap");
+  costmap_ros_ = std::make_shared<nav2_costmap_2d::Costmap2DROS>("local_costmap", std::string{get_namespace()}, "local_costmap");
 }
 
 ControllerServer::~ControllerServer()
@@ -497,7 +496,7 @@ void ControllerServer::setPlannerPath(const nav_msgs::msg::Path & path)
   RCLCPP_DEBUG(get_logger(), "Path end point is (%.2f, %.2f)",
                end_pose_.pose.position.x, end_pose_.pose.position.y);
 
-  current_path_ = path;
+  current_path_ = path; // lhq 设置全局路径
 }
 
 void ControllerServer::computeAndPublishVelocity()
@@ -524,7 +523,8 @@ void ControllerServer::computeAndPublishVelocity()
                                                                             nav_2d_utils::twist2Dto3D(twist),
                                                                             goal_checkers_[current_goal_checker_].get());
     last_valid_cmd_time_ = now();
-  } catch (nav2_core::PlannerException & e) {
+  } 
+  catch (nav2_core::PlannerException & e) {
     if (failure_tolerance_ > 0 || failure_tolerance_ == -1.0) {
       RCLCPP_WARN(this->get_logger(), "%s", e.what());
       cmd_vel_2d.twist.angular.x = 0;
@@ -535,42 +535,40 @@ void ControllerServer::computeAndPublishVelocity()
       cmd_vel_2d.twist.linear.z = 0;
       cmd_vel_2d.header.frame_id = costmap_ros_->getBaseFrameID();
       cmd_vel_2d.header.stamp = now();
-      if ((now() - last_valid_cmd_time_).seconds() > failure_tolerance_ &&
-        failure_tolerance_ != -1.0)
+      if ((now() - last_valid_cmd_time_).seconds() > failure_tolerance_ && failure_tolerance_ != -1.0)
       {
         throw nav2_core::PlannerException("Controller patience exceeded");
       }
-    } else {
+    }
+    else {
       throw nav2_core::PlannerException(e.what());
     }
   }
 
-  std::shared_ptr<Action::Feedback> feedback = std::make_shared<Action::Feedback>();
-  feedback->speed = std::hypot(cmd_vel_2d.twist.linear.x, cmd_vel_2d.twist.linear.y);
+  std::shared_ptr<Action::Feedback> feedback = std::make_shared<Action::Feedback>();  // 创建对象, 开辟内存
+  feedback->speed = std::hypot(cmd_vel_2d.twist.linear.x, cmd_vel_2d.twist.linear.y); // feedback速度大小 
 
   // Find the closest pose to current pose on global path
-  nav_msgs::msg::Path & current_path = current_path_;
-  auto find_closest_pose_idx =
-    [&pose, &current_path]() {
-      size_t closest_pose_idx = 0;
-      double curr_min_dist = std::numeric_limits<double>::max();
-      for (size_t curr_idx = 0; curr_idx < current_path.poses.size(); ++curr_idx) {
-        double curr_dist = nav2_util::geometry_utils::euclidean_distance(
-          pose, current_path.poses[curr_idx]);
-        if (curr_dist < curr_min_dist) {
-          curr_min_dist = curr_dist;
-          closest_pose_idx = curr_idx;
-        }
-      }
-      return closest_pose_idx;
-    };
+  nav_msgs::msg::Path& current_path = current_path_;
+  auto find_closest_pose_idx = [&pose, &current_path]() {
+                                   size_t closest_pose_idx = 0;
+                                   double curr_min_dist = std::numeric_limits<double>::max();
+                                   for (size_t curr_idx = 0; curr_idx < current_path.poses.size(); ++curr_idx) {
+                                     double curr_dist = nav2_util::geometry_utils::euclidean_distance(pose, current_path.poses[curr_idx]);
+                                     if (curr_dist < curr_min_dist) 
+                                     {
+                                       curr_min_dist = curr_dist;
+                                       closest_pose_idx = curr_idx;
+                                     }
+                                   }
+                                   return closest_pose_idx;
+                                 };
 
-  feedback->distance_to_goal =
-    nav2_util::geometry_utils::calculate_path_length(current_path_, find_closest_pose_idx());
+  feedback->distance_to_goal = nav2_util::geometry_utils::calculate_path_length(current_path_, find_closest_pose_idx());
   action_server_->publish_feedback(feedback);
 
   RCLCPP_DEBUG(get_logger(), "Publishing velocity at time %.2f", now().seconds());
-  publishVelocity(cmd_vel_2d);
+  publishVelocity(cmd_vel_2d); // 话题 "cmd_vel"
 }
 
 void ControllerServer::updateGlobalPath()
@@ -604,7 +602,8 @@ void ControllerServer::updateGlobalPath()
 void ControllerServer::publishVelocity(const geometry_msgs::msg::TwistStamped & velocity)
 {
   auto cmd_vel = std::make_unique<geometry_msgs::msg::Twist>(velocity.twist);
-  if (vel_publisher_->is_activated() && vel_publisher_->get_subscription_count() > 0) {
+  if (vel_publisher_->is_activated() && vel_publisher_->get_subscription_count() > 0) 
+  {
     vel_publisher_->publish(std::move(cmd_vel));
   }
 }

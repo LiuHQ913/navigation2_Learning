@@ -121,7 +121,7 @@ VelocitySmoother::on_configure(const rclcpp_lifecycle::State &)
 
   // Setup inputs / outputs
   smoothed_cmd_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel_smoothed", 1);
-  cmd_sub_ = create_subscription<geometry_msgs::msg::Twist>(
+  cmd_sub_ = create_subscription<geometry_msgs::msg::Twist>( // TODO flag
     "cmd_vel", rclcpp::QoS(1),
     std::bind(&VelocitySmoother::inputCommandCallback, this, std::placeholders::_1));
 
