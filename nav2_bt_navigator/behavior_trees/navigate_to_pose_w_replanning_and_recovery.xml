@@ -4,31 +4,40 @@
   recovery actions specific to planning / control as well as general system issues.
   This will be continuous if a kinematically valid planner is selected.
 -->
+
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
     <RecoveryNode number_of_retries="6" name="NavigateRecovery">
-      <PipelineSequence name="NavigateWithReplanning">
-        <RateController hz="1.0">
-          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+      <PipelineSequence name="NavigateWithReplanning"> <!-- 导航流程，它是一个序列，按顺序执行内部节点 -->  
+        <RateController hz="1.0"> <!-- 控制内部节点的执行频率 -->
+          <RecoveryNode number_of_retries="1" name="ComputePathToPose"> <!-- 尝试计算路径 -->
+            <!-- 核心的路径规划节点 -->
+            <!-- 它从黑板读取名为 goal 的目标点（这个 goal 就是 NavigateToPoseNavigator::initializeGoalPose 中设置的）-->
+            <!-- 使用名为 GridBased 的规划器 (通常是 NavFn, Global Planner, 或 Smac Planner Hybrid/Lattice) 来计算路径, 并将计算出的路径存储在黑板的 path 变量中 -->
             <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+            <!-- 如果 ComputePathToPose 失败，<ClearEntireCostmap name="ClearGlobalCostmap-Context" .../> 会被执行，尝试清除全局代价地图，然后 ComputePathToPose 会重试一次。 -->
             <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
           </RecoveryNode>
         </RateController>
-        <RecoveryNode number_of_retries="1" name="FollowPath">
+        <RecoveryNode number_of_retries="1" name="FollowPath">     <!-- 尝试跟随路径 -->
+          <!-- 核心的路径跟踪节点 -->
+          <!-- 黑板读取名为 path 的路径 -->
+          <!-- 使用名为 FollowPath 的控制器来控制机器人沿着路径移动。 -->
           <FollowPath path="{path}" controller_id="FollowPath"/>
+          <!-- 如果 FollowPath 失败，<ClearEntireCostmap name="ClearLocalCostmap-Context" .../> 会被执行，尝试清除局部代价地图，然后 FollowPath 会重试一次 -->
           <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
         </RecoveryNode>
       </PipelineSequence>
-      <ReactiveFallback name="RecoveryFallback">
-        <GoalUpdated/>
-        <RoundRobin name="RecoveryActions">
-          <Sequence name="ClearingActions">
+      <ReactiveFallback name="RecoveryFallback">  <!-- 如果 PipelineSequence (主导航流程) 失败了，这个反应式回退节点会被触发 -->
+        <GoalUpdated/>                            <!-- 检查目标是否被更新，如果更新了，可能会重新开始导航 -->
+        <RoundRobin name="RecoveryActions">       <!-- 轮询执行一系列恢复动作 -->
+          <Sequence name="ClearingActions">       <!-- 执行一系列清除动作 -->
             <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
             <ClearEntireCostmap name="ClearGlobalCostmap-Subtree" service_name="global_costmap/clear_entirely_global_costmap"/>
           </Sequence>
-          <Spin spin_dist="1.57"/>
-          <Wait wait_duration="5"/>
-          <BackUp backup_dist="0.30" backup_speed="0.05"/>
+          <Spin spin_dist="1.57"/>                          <!-- 机器人原地旋转。 -->
+          <Wait wait_duration="5"/>                         <!-- 等待5秒 -->
+          <BackUp backup_dist="0.30" backup_speed="0.05"/>  <!-- 机器人后退 -->
         </RoundRobin>
       </ReactiveFallback>
     </RecoveryNode>

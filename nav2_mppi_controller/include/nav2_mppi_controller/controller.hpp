@@ -83,10 +83,9 @@ public:
     * @param robot_speed Robot speed
     * @param goal_checker Pointer to the goal checker for awareness if completed task
     */
-  geometry_msgs::msg::TwistStamped computeVelocityCommands(
-    const geometry_msgs::msg::PoseStamped & robot_pose,
-    const geometry_msgs::msg::Twist & robot_speed,
-    nav2_core::GoalChecker * goal_checker) override;
+  geometry_msgs::msg::TwistStamped computeVelocityCommands(const geometry_msgs::msg::PoseStamped & robot_pose,
+                                                           const geometry_msgs::msg::Twist & robot_speed,
+                                                           nav2_core::GoalChecker * goal_checker) override;
 
   /**
     * @brief Set new reference path to track

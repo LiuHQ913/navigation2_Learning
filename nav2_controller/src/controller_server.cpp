@@ -440,7 +440,7 @@ void ControllerServer::computeControl()
 
       updateGlobalPath(); // 接受到了新全局路径，进行更新
 
-      computeAndPublishVelocity();
+      computeAndPublishVelocity(); // kernel
 
       if (isGoalReached()) {
         RCLCPP_INFO(get_logger(), "Reached the goal!");
@@ -519,9 +519,9 @@ void ControllerServer::computeAndPublishVelocity()
   geometry_msgs::msg::TwistStamped cmd_vel_2d;
 
   try {
-    cmd_vel_2d = controllers_[current_controller_]->computeVelocityCommands(pose,
-                                                                            nav_2d_utils::twist2Dto3D(twist),
-                                                                            goal_checkers_[current_goal_checker_].get());
+    cmd_vel_2d = controllers_[current_controller_]->computeVelocityCommands(pose,                                          // 机器人当前位姿 
+                                                                            nav_2d_utils::twist2Dto3D(twist),              // odom 速度
+                                                                            goal_checkers_[current_goal_checker_].get());  // 目标检查器
     last_valid_cmd_time_ = now();
   } 
   catch (nav2_core::PlannerException & e) {

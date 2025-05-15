@@ -65,9 +65,13 @@ class BasicNavigator(Node):
         self.nav_through_poses_client = ActionClient(self,
                                                      NavigateThroughPoses,
                                                      'navigate_through_poses')
-        self.nav_to_pose_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
+        self.nav_to_pose_client = ActionClient(self, 
+                                               NavigateToPose, 
+                                               'navigate_to_pose')
         self.follow_waypoints_client = ActionClient(self, FollowWaypoints, 'follow_waypoints')
-        self.follow_path_client = ActionClient(self, FollowPath, 'follow_path')
+        self.follow_path_client = ActionClient(self, 
+                                               FollowPath, 
+                                               'follow_path')
         self.compute_path_to_pose_client = ActionClient(self, ComputePathToPose,
                                                         'compute_path_to_pose')
         self.compute_path_through_poses_client = ActionClient(self, ComputePathThroughPoses,
@@ -140,13 +144,12 @@ class BasicNavigator(Node):
         self.debug("Waiting for 'NavigateToPose' action server")
         while not self.nav_to_pose_client.wait_for_server(timeout_sec=1.0):
             self.info("'NavigateToPose' action server not available, waiting...")
-
+        # 声明一个 NavigateToPose 的 goal 消息
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = pose
         goal_msg.behavior_tree = behavior_tree
 
-        self.info('Navigating to goal: ' + str(pose.pose.position.x) + ' ' +
-                  str(pose.pose.position.y) + '...')
+        self.info('Navigating to goal: ' + str(pose.pose.position.x) + ' ' + str(pose.pose.position.y) + '...')
         send_goal_future = self.nav_to_pose_client.send_goal_async(goal_msg,
                                                                    self._feedbackCallback)
         rclpy.spin_until_future_complete(self, send_goal_future)
@@ -253,7 +256,7 @@ class BasicNavigator(Node):
 
         goal_msg = FollowPath.Goal()
         goal_msg.path = path
-        goal_msg.controller_id = controller_id      # TODO 用的什么控制器？
+        goal_msg.controller_id = controller_id      # TODO 用的什么控制器？ nav2_mppi_controller::MPPIController
         goal_msg.goal_checker_id = goal_checker_id  # TODO 用的什么控制器？
 
         self.info('Executing path...')

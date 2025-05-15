@@ -22,10 +22,10 @@
 namespace nav2_mppi_controller
 {
 
-void MPPIController::configure(
-  const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
-  std::string name, const std::shared_ptr<tf2_ros::Buffer> tf,
-  const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
+void MPPIController::configure(const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
+                               std::string name,
+                               const std::shared_ptr<tf2_ros::Buffer> tf,
+                               const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
 {
   parent_ = parent;
   costmap_ros_ = costmap_ros;
@@ -44,9 +44,7 @@ void MPPIController::configure(
   // Configure composed objects
   optimizer_.initialize(parent_, name_, costmap_ros_, parameters_handler_.get());
   path_handler_.initialize(parent_, name_, costmap_ros_, tf_buffer_, parameters_handler_.get());
-  trajectory_visualizer_.on_configure(
-    parent_, name_,
-    costmap_ros_->getGlobalFrameID(), parameters_handler_.get());
+  trajectory_visualizer_.on_configure(parent_, name_, costmap_ros_->getGlobalFrameID(), parameters_handler_.get());
 
   RCLCPP_INFO(logger_, "Configured MPPI Controller: %s", name_.c_str());
 }
@@ -77,10 +75,9 @@ void MPPIController::reset()
   optimizer_.reset();
 }
 
-geometry_msgs::msg::TwistStamped MPPIController::computeVelocityCommands(
-  const geometry_msgs::msg::PoseStamped & robot_pose,
-  const geometry_msgs::msg::Twist & robot_speed,
-  nav2_core::GoalChecker * goal_checker)
+geometry_msgs::msg::TwistStamped MPPIController::computeVelocityCommands(const geometry_msgs::msg::PoseStamped & robot_pose,
+                                                                         const geometry_msgs::msg::Twist & robot_speed,
+                                                                         nav2_core::GoalChecker * goal_checker)
 {
 #ifdef BENCHMARK_TESTING
   auto start = std::chrono::system_clock::now();
@@ -99,8 +96,7 @@ geometry_msgs::msg::TwistStamped MPPIController::computeVelocityCommands(
   nav2_costmap_2d::Costmap2D * costmap = costmap_ros_->getCostmap();
   std::unique_lock<nav2_costmap_2d::Costmap2D::mutex_t> costmap_lock(*(costmap->getMutex()));
 
-  geometry_msgs::msg::TwistStamped cmd =
-    optimizer_.evalControl(robot_pose, robot_speed, transformed_plan, goal, goal_checker);
+  geometry_msgs::msg::TwistStamped cmd = optimizer_.evalControl(robot_pose, robot_speed, transformed_plan, goal, goal_checker);
 
 #ifdef BENCHMARK_TESTING
   auto end = std::chrono::system_clock::now();

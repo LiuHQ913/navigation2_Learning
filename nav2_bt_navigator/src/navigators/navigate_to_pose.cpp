@@ -115,10 +115,11 @@ NavigateToPoseNavigator::onLoop()
   auto feedback_msg = std::make_shared<ActionT::Feedback>();
 
   geometry_msgs::msg::PoseStamped current_pose;
-  nav2_util::getCurrentPose(
-    current_pose, *feedback_utils_.tf,
-    feedback_utils_.global_frame, feedback_utils_.robot_frame,
-    feedback_utils_.transform_tolerance);
+  nav2_util::getCurrentPose(current_pose, 
+                            *feedback_utils_.tf,
+                            feedback_utils_.global_frame, 
+                            feedback_utils_.robot_frame,
+                            feedback_utils_.transform_tolerance);
 
   auto blackboard = bt_action_server_->getBlackboard();
 
@@ -128,24 +129,22 @@ NavigateToPoseNavigator::onLoop()
     blackboard->get<nav_msgs::msg::Path>(path_blackboard_id_, current_path);
 
     // Find the closest pose to current pose on global path
-    auto find_closest_pose_idx =
-      [&current_pose, &current_path]() {
-        size_t closest_pose_idx = 0;
-        double curr_min_dist = std::numeric_limits<double>::max();
-        for (size_t curr_idx = 0; curr_idx < current_path.poses.size(); ++curr_idx) {
-          double curr_dist = nav2_util::geometry_utils::euclidean_distance(
-            current_pose, current_path.poses[curr_idx]);
-          if (curr_dist < curr_min_dist) {
-            curr_min_dist = curr_dist;
-            closest_pose_idx = curr_idx;
-          }
-        }
-        return closest_pose_idx;
-      };
+    auto find_closest_pose_idx = [&current_pose, &current_path]() { size_t closest_pose_idx = 0;
+                                                                    double curr_min_dist = std::numeric_limits<double>::max();
+                                                                    for (size_t curr_idx = 0; curr_idx < current_path.poses.size(); ++curr_idx) 
+                                                                    {
+                                                                      double curr_dist = nav2_util::geometry_utils::euclidean_distance(current_pose, current_path.poses[curr_idx]);
+                                                                      if (curr_dist < curr_min_dist) 
+                                                                      {
+                                                                        curr_min_dist = curr_dist;
+                                                                        closest_pose_idx = curr_idx;
+                                                                      }
+                                                                    }
+                                                                    return closest_pose_idx;
+                                                                  };
 
     // Calculate distance on the path
-    double distance_remaining =
-      nav2_util::geometry_utils::calculate_path_length(current_path, find_closest_pose_idx());
+    double distance_remaining = nav2_util::geometry_utils::calculate_path_length(current_path, find_closest_pose_idx());
 
     // Default value for time remaining
     rclcpp::Duration estimated_time_remaining = rclcpp::Duration::from_seconds(0.0);
@@ -154,16 +153,18 @@ NavigateToPoseNavigator::onLoop()
     geometry_msgs::msg::Twist current_odom = odom_smoother_->getTwist();
     double current_linear_speed = std::hypot(current_odom.linear.x, current_odom.linear.y);
 
-    // Calculate estimated time taken to goal if speed is higher than 1cm/s
-    // and at least 10cm to go
+    // 估算机器人到达目标点所需的剩余时间
+    // Calculate estimated time taken to goal if speed is higher than 1cm/s and at least 10cm to go
     if ((std::abs(current_linear_speed) > 0.01) && (distance_remaining > 0.1)) {
-      estimated_time_remaining =
-        rclcpp::Duration::from_seconds(distance_remaining / std::abs(current_linear_speed));
+      estimated_time_remaining = rclcpp::Duration::from_seconds(distance_remaining / std::abs(current_linear_speed));
     }
 
     feedback_msg->distance_remaining = distance_remaining;
     feedback_msg->estimated_time_remaining = estimated_time_remaining;
-  } catch (...) {
+    feedback_msg->current_pose = current_pose;
+
+  } 
+  catch (...) {
     // Ignore
   }
 

@@ -32,6 +32,10 @@ namespace nav2_bt_navigator
 {
 
 /**
+  @brief 导航器类，负责接收外部的导航请求（如 RViz 发送的 goal），然后调度和管理行为树的执行，并处理任务的启动、监控、取消、恢复等。
+  @note  基类 Navigator
+*/
+/**
  * @class NavigateToPoseNavigator
  * @brief A navigator for navigating to a specified pose
  */

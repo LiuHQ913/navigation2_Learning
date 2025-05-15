@@ -139,12 +139,11 @@ public:
    * @param odom_smoother Object to get current smoothed robot's speed
    * @return bool If successful
    */
-  bool on_configure(
-    rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node,
-    const std::vector<std::string> & plugin_lib_names,
-    const FeedbackUtils & feedback_utils,
-    nav2_bt_navigator::NavigatorMuxer * plugin_muxer,
-    std::shared_ptr<nav2_util::OdomSmoother> odom_smoother)
+  bool on_configure(rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node,
+                    const std::vector<std::string> & plugin_lib_names,
+                    const FeedbackUtils & feedback_utils,
+                    nav2_bt_navigator::NavigatorMuxer * plugin_muxer,
+                    std::shared_ptr<nav2_util::OdomSmoother> odom_smoother)
   {
     auto node = parent_node.lock();
     logger_ = node->get_logger();
@@ -155,16 +154,16 @@ public:
     // get the default behavior tree for this navigator
     std::string default_bt_xml_filename = getDefaultBTFilepath(parent_node);
 
+    // note 行为树下的动作服务器
     // Create the Behavior Tree Action Server for this navigator
-    bt_action_server_ = std::make_unique<nav2_behavior_tree::BtActionServer<ActionT>>(
-      node,
-      getName(),
-      plugin_lib_names,
-      default_bt_xml_filename,
-      std::bind(&Navigator::onGoalReceived, this, std::placeholders::_1),
-      std::bind(&Navigator::onLoop, this),
-      std::bind(&Navigator::onPreempt, this, std::placeholders::_1),
-      std::bind(&Navigator::onCompletion, this, std::placeholders::_1, std::placeholders::_2));
+    bt_action_server_ = std::make_unique<nav2_behavior_tree::BtActionServer<ActionT>>(node,
+                                                                                      getName(),
+                                                                                      plugin_lib_names,
+                                                                                      default_bt_xml_filename,
+                                                                                      std::bind(&Navigator::onGoalReceived, this, std::placeholders::_1),                        // 当收到目标时
+                                                                                      std::bind(&Navigator::onLoop, this),                                                       // 行为树执行循环
+                                                                                      std::bind(&Navigator::onPreempt, this, std::placeholders::_1),                             // 当目标被抢占时   
+                                                                                      std::bind(&Navigator::onCompletion, this, std::placeholders::_1, std::placeholders::_2));  // 当动作完成时
 
     bool ok = true;
     if (!bt_action_server_->on_configure()) {

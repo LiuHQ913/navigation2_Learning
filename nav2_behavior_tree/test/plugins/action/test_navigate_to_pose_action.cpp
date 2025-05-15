@@ -35,10 +35,7 @@ public:
   {}
 
 protected:
-  void execute(
-    const typename std::shared_ptr<
-      rclcpp_action::ServerGoalHandle<nav2_msgs::action::NavigateToPose>> goal_handle)
-  override
+  void execute(const typename std::shared_ptr<rclcpp_action::ServerGoalHandle<nav2_msgs::action::NavigateToPose>> goal_handle) override
   {
     const auto goal = goal_handle->get_goal();
     auto result = std::make_shared<nav2_msgs::action::NavigateToPose::Result>();

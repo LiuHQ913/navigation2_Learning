@@ -25,6 +25,12 @@
 namespace nav2_behavior_tree
 {
 
+
+/**
+ @brief 这是一个行为树（Behavior Tree, BT）节点，用于在行为树中发起 NavigateToPose 动作（action）。
+        其本质是一个“叶子节点”，在行为树执行时，负责向 ROS2 action server 发送导航目标，并处理反馈、结果等。
+
+*/
 /**
  * @brief A nav2_behavior_tree::BtActionNode class that wraps nav2_msgs::action::NavigateToPose
  */
@@ -37,10 +43,9 @@ public:
    * @param action_name Action name this node creates a client for
    * @param conf BT node configuration
    */
-  NavigateToPoseAction(
-    const std::string & xml_tag_name,
-    const std::string & action_name,
-    const BT::NodeConfiguration & conf);
+  NavigateToPoseAction(const std::string & xml_tag_name,
+                       const std::string & action_name,
+                       const BT::NodeConfiguration & conf);
 
   /**
    * @brief Function to perform some user-defined operation on tick
@@ -53,11 +58,8 @@ public:
    */
   static BT::PortsList providedPorts()
   {
-    return providedBasicPorts(
-      {
-        BT::InputPort<geometry_msgs::msg::PoseStamped>("goal", "Destination to plan to"),
-        BT::InputPort<std::string>("behavior_tree", "Behavior tree to run"),
-      });
+    return providedBasicPorts({BT::InputPort<geometry_msgs::msg::PoseStamped>("goal", "Destination to plan to"),
+                               BT::InputPort<std::string>("behavior_tree", "Behavior tree to run"),});
   }
 };
 
